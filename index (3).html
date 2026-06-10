@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevMetric: Open Analytics Sandbox</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <h1>⚡ DevMetric Hub</h1>
+        <div id="sync-status">🔄 Pipeline Real-time</div>
+    </header>
+
+    <main class="grid-layout">
+        <section class="card">
+            <h3><i class="accent">●</i> Activity Index</h3>
+            <div class="chart-wrapper">
+                <canvas id="activityChart"></canvas>
+            </div>
+        </section>
+
+        <section class="card">
+            <h3>📡 Real-Time Crypto Stream</h3>
+            <div id="crypto-data" class="metrics-display">Loading public market streams...</div>
+            <button class="btn" onclick="fetchCryptoMetric()">Refresh Feed</button>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

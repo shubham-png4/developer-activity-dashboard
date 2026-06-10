@@ -1,0 +1,23 @@
+:root {
+    --bg-main: #090d16;
+    --bg-card: #111827;
+    --accent: #38bdf8;
+    --text: #f8fafc;
+    --border: #1f2937;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
+body { background: var(--bg-main); color: var(--text); padding: 2rem; }
+
+header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+h1 { color: var(--text); font-size: 1.75rem; }
+
+.grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; }
+.card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+
+.chart-wrapper { position: relative; height: 200px; width: 100%; margin-top: 1rem; }
+.metrics-display { font-family: monospace; font-size: 1.1rem; color: #4ade80; margin: 1.5rem 0; }
+
+.btn { background: var(--accent); color: #000; font-weight: bold; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; }
+.btn:hover { background: #7dd3fc; }
+.accent { color: var(--accent); font-style: normal; margin-right: 0.5rem; }
