@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinBeat AI - Expense & Music Dashboard</title>
+    <!-- Chart.js CDN for interactive visual charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --surface-dark: #1e1e1e;
+            --spotify-green: #1DB954;
+            --accent-purple: #bb86fc;
+            --text-light: #f5f5f5;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        header h1 { color: var(--spotify-green); margin-bottom: 5px; }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media(max-width: 850px) { .grid { grid-template-columns: 1fr; } }
+        .card {
+            background-color: var(--surface-dark);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+        h2 { border-bottom: 2px solid #333; padding-bottom: 10px; margin-top: 0; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #aaa; }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            background: #2d2d2d;
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: var(--spotify-green);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #1aa34a; }
+        .btn-ai { background-color: var(--accent-purple); }
+        .btn-ai:hover { background-color: #9a66d4; }
+        .expense-list {
+            list-style: none;
+            padding: 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .expense-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #333;
+        }
+        .total-banner {
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: right;
+            margin-top: 15px;
+            color: var(--accent-purple);
+        }
+        #ai-output {
+            background: #2a1b3d;
+            padding: 15px;
+            border-left: 4px solid var(--accent-purple);
+            margin-top: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .chart-container {
+            position: relative;
+            height: 250px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .player-wrapper {
+            margin-top: 15px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎵 FinBeat AI Tracker</h1>
+            <p>Sync your spending logic with your psychological audio landscape.</p>
+        </header>
+
+        <div class="grid">
+            <!-- Left Column: Expense Entry & Visual Analytics -->
+            <div>
+                <div class="card">
+                    <h2>Log an Expense</h2>
+                    <form id="expense-form">
+                        <div class="form-group">
+                            <label>Category</label>
+                            <select id="category" required>
+                                <option value="Food">Food & Dining</option>
+                                <option value="Utilities">Bills & Utilities</option>
+                                <option value="Entertainment">Entertainment</option>
+                                <option value="Shopping">Shopping</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Amount (₹)</label>
+                            <input type="number" id="amount" placeholder="e.g. 500" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input type="text" id="description" placeholder="e.g. Starbucks Coffee">
+                        </div>
+                        <button type="submit">Save Transaction</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2>Spending Distribution</h2>
+                    <div class="chart-container">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                    <ul class="expense-list" id="ui-expense-list">
+                        {% for item in expenses %}
+                        <li class="expense-item">
+                            <span><strong>{{ item.category }}</strong> - {{ item.description }}</span>
+                            <span>₹{{ item.amount }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="total-banner">Total Outflow: ₹<span id="ui-total">{{ total_spent }}</span></div>
+                </div>
+            </div>
+
+            <!-- Right Column: AI Analysis & Embedded Spotify Player -->
+            <div>
+                <div class="card">
+                    <h2>AI Financial Insights</h2>
+                    <p>Run natural language diagnostics on your expenditures.</p>
+                    <button id="btn-analyze" class="button btn-ai">Run AI Diagnostic</button>
+                    
+                    <div id="ai-output">
+                        <p id="ai-critique"></p>
+                        <p><strong>Recommended Vibe:</strong> <span id="ai-genre" style="color: var(--accent-purple);"></span></p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Spotify Integration</h2>
+                    {% if not spotify_connected %}
+                        <button onclick="location.href='/spotify-login'" style="background-color: #1DB954;">Connect Spotify Account</button>
+                    {% else %}
+                        <p style="color: #1DB954; font-weight: bold;">✓ Spotify Authenticated</p>
+                        <button id="btn-fetch-music" class="btn-ai" style="background: #333; color: white; border: 1px solid #555;">Embed Matching Audio</button>
+                        
+                        <div id="player-container">
+                            <!-- Embedded Spotify Player will mount here dynamically -->
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Server-injected raw expense array for chart processing
+        const rawExpenses = {{ expenses | tojson }};
+
+        // Initialize Chart.js Interactive Pie Chart
+        function initChart() {
+            const categoryTotals = {};
+            rawExpenses.forEach(exp => {
+                categoryTotals[exp.category] = (categoryTotals[exp.category] || 0) + parseFloat(exp.amount);
+            });
+
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categoryTotals),
+                    datasets: [{
+                        data: Object.values(categoryTotals),
+                        backgroundColor: [
+                            '#bb86fc', '#1DB954', '#03dac6', '#cf6679', '#ffb74d'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#ffffff' } }
+                    }
+                }
+            });
+        }
+        initChart();
+
+        // Form Submission handling
+        document.getElementById('expense-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                category: document.getElementById('category').value,
+                amount: document.getElementById('amount').value,
+                description: document.getElementById('description').value
+            };
+
+            const response = await fetch('/add-expense', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if(response.ok) {
+                location.reload();
+            }
+        });
+
+        // AI Assessment trigger
+        document.getElementById('btn-analyze').addEventListener('click', async () => {
+            const outDiv = document.getElementById('ai-output');
+            outDiv.style.display = 'block';
+            document.getElementById('ai-critique').innerText = "Analyzing dynamic telemetry...";
+            
+            const response = await fetch('/ai-analyze');
+            const data = await response.json();
+            
+            document.getElementById('ai-critique').innerText = data.critique;
+            document.getElementById('ai-genre').innerText = data.music_genre;
+        });
+
+        // Embedded Spotify Player Integration
+        const musicBtn = document.getElementById('btn-fetch-music');
+        if (musicBtn) {
+            musicBtn.addEventListener('click', async () => {
+                const container = document.getElementById('player-container');
+                container.innerHTML = "<p>Loading player instance...</p>";
+                
+                const response = await fetch('/get-playlist');
+                const data = await response.json();
+                
+                if(data.playlists && data.playlists.length > 0) {
+                    // Extract Spotify ID from URL (e.g. https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M)
+                    const firstPlaylistUrl = data.playlists[0].url;
+                    const playlistId = firstPlaylistUrl.split('/playlist/')[1].split('?')[0];
+
+                    container.innerHTML = `
+                        <p style="margin-top:15px;"><strong>Playing match for:</strong> ${data.query}</p>
+                        <div class="player-wrapper">
+                            <iframe 
+                                style="border-radius:12px" 
+                                src="https://open.spotify.com/embed/playlist/${playlistId}?utm_source=generator&theme=0" 
+                                width="100%" 
+                                height="152" 
+                                frameBorder="0" 
+                                allowfullscreen="" 
+                                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                                loading="lazy">
+                            </iframe>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = "<p>Error rendering playlist. Please run AI Diagnostic first.</p>";
+                }
+            });
+        }
+    </script>
+</body>
+</html>
